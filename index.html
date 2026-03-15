@@ -180,7 +180,7 @@
         <div class="topbar">
             <h1 class="page-title" id="topbar-title">Growth Metrics</h1>
             <div class="client-profile">
-                <div class="avatar" id="client-initial">C</div>
+                <div class="avatar" id="client-initial">O</div>
                 <span id="client-name" style="font-weight: 600; font-size: 14px;">Client Name</span>
             </div>
         </div>
@@ -192,7 +192,7 @@
                     <div id="chart-growth"></div>
                 </div>
                 <div class="glass-card">
-                    <h3 style="margin-bottom: 25px; font-weight: 600; font-size: 18px;">Engagement Rate</h3>
+                    <h3 style="margin-bottom: 25px; font-weight: 600; font-size: 18px;">Engagement Rate (%)</h3>
                     <div id="chart-engagement"></div>
                 </div>
             </div>
@@ -211,7 +211,6 @@
         // --- 1. LOGIN & AUTHENTICATION LOGIC ---
         let currentClient = "";
 
-        // Database Client Sementara (Hardcoded untuk keselamatan asas)
         const clientDB = {
             "Faiz": { pass: "admin123", display: "Omnyzo Admin", init: "O" },
             "Cagamas": { pass: "cagamas12345", display: "Cagamas Berhad", init: "C" },
@@ -238,12 +237,10 @@
             const intro = document.getElementById('intro-screen');
             const introText = document.getElementById('intro-text');
             
-            // Personalize intro based on client
             introText.innerText = "Welcome, " + currentClient.display;
             introText.style.animation = "appleReveal 2s cubic-bezier(0.25, 1, 0.5, 1) forwards";
             intro.style.display = 'flex';
             
-            // Set Topbar Client Info
             document.getElementById('client-name').innerText = currentClient.display;
             document.getElementById('client-initial').innerText = currentClient.init;
 
@@ -253,7 +250,7 @@
                     intro.style.display = 'none';
                     document.getElementById('main-content').style.display = 'flex';
                     showNotification('Secure connection established.');
-                    renderCharts(); // Lukis graf
+                    renderCharts(); 
                 }, 1000);
             }, 2500);
         }
@@ -281,56 +278,90 @@
 
         function logout() { location.reload(); }
 
-        // --- 3. APEXCHARTS ENGINE (NATIVE GRAPHS) ---
-        function renderCharts() {
-            const commonOptions = {
-                chart: { toolbar: { show: false }, background: 'transparent', fontFamily: '-apple-system, sans-serif' },
-                theme: { mode: 'dark' },
-                grid: { borderColor: 'rgba(255,255,255,0.05)', strokeDashArray: 4 },
-                dataLabels: { enabled: false },
-                tooltip: { theme: 'dark', style: { fontSize: '14px' } }
-            };
+        // --- 3. LIVE API ENGINE (FETCH FROM GOOGLE SHEETS CSV) ---
+        async function renderCharts() {
+            
+            // !!! PENTING: PASTE LINK CSV DARI GOOGLE SHEETS KAU DI SINI !!!
+            const csvUrl = 'PASTE_LINK_CSV_KAU_DI_SINI';
 
-            // Area Chart (Followers)
-            new ApexCharts(document.querySelector("#chart-growth"), {
-                ...commonOptions,
-                series: [{ name: 'Total Followers', data: [12000, 15000, 18500, 22000, 28000, 35000] }],
-                chart: { ...commonOptions.chart, type: 'area', height: 350 },
-                colors: ['#007AFF'],
-                stroke: { curve: 'smooth', width: 3 },
-                fill: { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.5, opacityTo: 0.05 } },
-                xaxis: { categories: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'], axisBorder: { show: false }, axisTicks: { show: false } },
-                yaxis: { labels: { formatter: (value) => { return value / 1000 + "k" } } }
-            }).render();
+            try {
+                // Tarik data secara live
+                const response = await fetch(csvUrl);
+                const data = await response.text();
+                const rows = data.split('\n').slice(1); // Buang header
 
-            // Bar Chart (Engagement)
-            new ApexCharts(document.querySelector("#chart-engagement"), {
-                ...commonOptions,
-                series: [{ name: 'Engagement %', data: [3.2, 4.1, 3.8, 5.5, 6.2] }],
-                chart: { ...commonOptions.chart, type: 'bar', height: 350 },
-                colors: ['#34d399'],
-                plotOptions: { bar: { borderRadius: 8, columnWidth: '40%' } },
-                xaxis: { categories: ['W1', 'W2', 'W3', 'W4', 'W5'], axisBorder: { show: false }, axisTicks: { show: false } }
-            }).render();
+                const labels = [];
+                const followersData = [];
+                const engagementData = [];
 
-            // Radial Chart (KOL Progress)
-            new ApexCharts(document.querySelector("#chart-kol"), {
-                series: [82],
-                chart: { type: 'radialBar', height: 350, background: 'transparent' },
-                plotOptions: {
-                    radialBar: {
-                        hollow: { size: '70%', background: 'transparent' },
-                        track: { background: 'rgba(255,255,255,0.05)' },
-                        dataLabels: {
-                            name: { show: true, fontSize: '14px', color: '#94a3b8', offsetY: 20 },
-                            value: { show: true, fontSize: '40px', fontWeight: 700, color: '#fff', offsetY: -10, formatter: function (val) { return val + "%" } }
-                        }
+                // Proses setiap baris data
+                rows.forEach(row => {
+                    // Pecahkan data berdasarkan koma (sebab fail CSV)
+                    // Andaikan struktur Google Sheets kau: A=Platform, B=Followers, C=Reach, D=Engagement
+                    const cols = row.split(',');
+                    if(cols[0] && cols[0].trim() !== '') {
+                        labels.push(cols[0].trim()); 
+                        followersData.push(parseInt(cols[1]) || 0); 
+                        engagementData.push(parseFloat(cols[3]) || 0); 
                     }
-                },
-                fill: { type: 'gradient', gradient: { shade: 'dark', type: 'horizontal', colorStops: [[{ offset: 0, color: '#007AFF', opacity: 1 }, { offset: 100, color: '#34d399', opacity: 1 }]] } },
-                stroke: { lineCap: 'round' },
-                labels: ['Completed'],
-            }).render();
+                });
+
+                // Style asas untuk semua graf
+                const commonOptions = {
+                    chart: { toolbar: { show: false }, background: 'transparent', fontFamily: '-apple-system, sans-serif' },
+                    theme: { mode: 'dark' },
+                    grid: { borderColor: 'rgba(255,255,255,0.05)', strokeDashArray: 4 },
+                    dataLabels: { enabled: false },
+                    tooltip: { theme: 'dark', style: { fontSize: '14px' } }
+                };
+
+                // Graf Bar - Follower Growth
+                new ApexCharts(document.querySelector("#chart-growth"), {
+                    ...commonOptions,
+                    series: [{ name: 'Total Followers', data: followersData }],
+                    chart: { ...commonOptions.chart, type: 'bar', height: 350 },
+                    colors: ['#007AFF'],
+                    plotOptions: { bar: { borderRadius: 8, columnWidth: '40%' } },
+                    xaxis: { categories: labels, axisBorder: { show: false }, axisTicks: { show: false } }
+                }).render();
+
+                // Graf Line - Engagement Rate
+                new ApexCharts(document.querySelector("#chart-engagement"), {
+                    ...commonOptions,
+                    series: [{ name: 'Engagement %', data: engagementData }],
+                    chart: { ...commonOptions.chart, type: 'line', height: 350 },
+                    colors: ['#34d399'],
+                    stroke: { curve: 'smooth', width: 4 },
+                    xaxis: { categories: labels, axisBorder: { show: false }, axisTicks: { show: false } }
+                }).render();
+
+                // Graf Radial - Progress KOL (Statik buat masa ni)
+                new ApexCharts(document.querySelector("#chart-kol"), {
+                    series: [82],
+                    chart: { type: 'radialBar', height: 350, background: 'transparent' },
+                    plotOptions: {
+                        radialBar: {
+                            hollow: { size: '70%', background: 'transparent' },
+                            track: { background: 'rgba(255,255,255,0.05)' },
+                            dataLabels: {
+                                name: { show: true, fontSize: '14px', color: '#94a3b8', offsetY: 20 },
+                                value: { show: true, fontSize: '40px', fontWeight: 700, color: '#fff', offsetY: -10, formatter: function (val) { return val + "%" } }
+                            }
+                        }
+                    },
+                    fill: { type: 'gradient', gradient: { shade: 'dark', type: 'horizontal', colorStops: [[{ offset: 0, color: '#007AFF', opacity: 1 }, { offset: 100, color: '#34d399', opacity: 1 }]] } },
+                    stroke: { lineCap: 'round' },
+                    labels: ['Completed'],
+                }).render();
+
+            } catch (error) {
+                console.error("Error fetching live data:", error);
+                showNotification("System running on cached data.");
+                
+                // Kalau API gagal/link CSV kosong, graf kosong akan dilukis sebagai sandaran
+                document.querySelector("#chart-growth").innerHTML = "<p style='color: var(--text-muted); text-align:center; padding-top: 50px;'>Awaiting live data connection...</p>";
+                document.querySelector("#chart-engagement").innerHTML = "<p style='color: var(--text-muted); text-align:center; padding-top: 50px;'>Awaiting live data connection...</p>";
+            }
         }
     </script>
 </body>
