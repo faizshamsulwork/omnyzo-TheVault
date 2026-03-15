@@ -5,25 +5,28 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Omnyzo: The Vault</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
     <style>
-        /* CSS Variables & Fonts */
+        /* Typography & Core Variables */
         @import url('https://fonts.googleapis.com/css2?family=SF+Pro+Display:wght@300;400;500;600;700&display=swap');
         
         :root {
-            --glass-bg: rgba(255, 255, 255, 0.05);
-            --glass-border: rgba(255, 255, 255, 0.1);
-            --text-main: #ffffff;
-            --text-muted: #a1a1aa;
+            --glass-bg: rgba(255, 255, 255, 0.03);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --glass-highlight: rgba(255, 255, 255, 0.15);
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
             --accent: #007AFF; /* Apple Blue */
+            --accent-glow: rgba(0, 122, 255, 0.4);
         }
 
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
 
-        /* Animated Gradient Background */
+        /* Premium Animated Gradient Background */
         body {
-            background: linear-gradient(-45deg, #0f172a, #1e1b4b, #000000, #172554);
+            background: linear-gradient(-45deg, #020617, #0f172a, #000000, #172554);
             background-size: 400% 400%;
-            animation: gradientBG 15s ease infinite;
+            animation: gradientBG 20s ease infinite;
             color: var(--text-main);
             display: flex;
             height: 100vh;
@@ -36,19 +39,49 @@
             100% { background-position: 0% 50%; }
         }
 
-        /* Apple-style Intro Screen */
+        /* -----------------------------------
+           1. LOGIN SCREEN (SECURE GATEWAY)
+           ----------------------------------- */
+        #login-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85); backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px);
+            z-index: 10000; display: flex; justify-content: center; align-items: center;
+            transition: opacity 0.8s ease;
+        }
+        .login-card {
+            background: var(--glass-bg); border: 1px solid var(--glass-border);
+            padding: 50px 40px; border-radius: 28px; width: 100%; max-width: 420px; text-align: center;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+        }
+        .login-logo { font-size: 24px; font-weight: 700; letter-spacing: 2px; margin-bottom: 30px; }
+        .login-logo span { color: var(--accent); }
+        .login-input {
+            width: 100%; padding: 16px; margin: 8px 0; border-radius: 14px; font-size: 15px;
+            border: 1px solid var(--glass-border); background: rgba(0,0,0,0.2);
+            color: white; outline: none; transition: all 0.3s;
+        }
+        .login-input:focus { border-color: var(--accent); box-shadow: 0 0 15px var(--accent-glow); }
+        .login-btn {
+            width: 100%; padding: 16px; border-radius: 14px; border: none; font-size: 16px;
+            background: var(--accent); color: white; font-weight: 600; cursor: pointer; 
+            margin-top: 20px; transition: background 0.3s;
+        }
+        .login-btn:hover { background: #0056b3; }
+
+        /* -----------------------------------
+           2. APPLE-STYLE INTRO
+           ----------------------------------- */
         #intro-screen {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background-color: #000; z-index: 9999;
-            display: flex; justify-content: center; align-items: center;
-            transition: opacity 1s cubic-bezier(0.25, 1, 0.5, 1), visibility 1s;
+            display: none; justify-content: center; align-items: center;
+            transition: opacity 1s cubic-bezier(0.25, 1, 0.5, 1);
         }
         .intro-logo {
-            font-size: 3rem; font-weight: 700; letter-spacing: 2px;
-            background: linear-gradient(to right, #fff, #a1a1aa);
+            font-size: 3.5rem; font-weight: 700; letter-spacing: 3px;
+            background: linear-gradient(to right, #ffffff, #a1a1aa);
             -webkit-background-clip: text; -webkit-text-fill-color: transparent;
             opacity: 0; transform: scale(0.9);
-            animation: appleReveal 2s cubic-bezier(0.25, 1, 0.5, 1) forwards;
         }
         @keyframes appleReveal {
             0% { opacity: 0; transform: scale(0.95); filter: blur(10px); }
@@ -56,192 +89,248 @@
             100% { opacity: 1; transform: scale(1); }
         }
 
-        /* Liquid Glass Notification */
+        /* -----------------------------------
+           3. LIQUID NOTIFICATION
+           ----------------------------------- */
         #notification {
             position: fixed; top: -100px; left: 50%; transform: translateX(-50%);
-            background: rgba(30, 30, 30, 0.6); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
-            border: 1px solid var(--glass-border); padding: 12px 24px;
-            border-radius: 50px; z-index: 1000; display: flex; align-items: center; gap: 10px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            background: rgba(20, 20, 20, 0.7); backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px);
+            border: 1px solid var(--glass-highlight); padding: 14px 28px;
+            border-radius: 50px; z-index: 1000; display: flex; align-items: center; gap: 12px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.6);
             transition: top 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            font-weight: 500; font-size: 15px;
         }
         #notification.show { top: 40px; }
 
-        /* Glassmorphism Sidebar */
-        .sidebar {
-            width: 260px; background: var(--glass-bg); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
-            border-right: 1px solid var(--glass-border); padding: 30px 20px;
-            display: flex; flex-direction: column; z-index: 100; transition: transform 0.3s ease;
+        /* -----------------------------------
+           4. SIDEBAR & MAIN LAYOUT
+           ----------------------------------- */
+        .sidebar { 
+            width: 280px; background: var(--glass-bg); backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px);
+            border-right: 1px solid var(--glass-border); padding: 40px 24px; 
+            display: flex; flex-direction: column; z-index: 100; transition: transform 0.4s ease; 
         }
-        .logo { font-size: 20px; font-weight: 700; margin-bottom: 40px; letter-spacing: 1px; }
-        .logo span { color: var(--accent); }
-        .nav-item {
-            padding: 12px 16px; margin-bottom: 8px; border-radius: 12px;
-            cursor: pointer; color: var(--text-muted); font-weight: 500;
-            display: flex; align-items: center; gap: 12px; transition: all 0.3s ease;
+        .nav-item { 
+            padding: 14px 18px; margin-bottom: 10px; border-radius: 14px; 
+            cursor: pointer; color: var(--text-muted); display: flex; align-items: center; gap: 14px; 
+            transition: all 0.3s; font-weight: 500; font-size: 15px;
         }
-        .nav-item:hover, .nav-item.active {
-            background: rgba(255, 255, 255, 0.1); color: #fff;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-        }
+        .nav-item:hover { background: var(--glass-highlight); color: #fff; }
+        .nav-item.active { background: var(--accent); color: #fff; box-shadow: 0 4px 20px var(--accent-glow); }
         
-        /* Mobile Hamburger */
-        .mobile-toggle { display: none; position: fixed; top: 20px; right: 20px; z-index: 1001; background: var(--glass-bg); backdrop-filter: blur(10px); border: 1px solid var(--glass-border); padding: 10px; border-radius: 8px; color: white; border: none; }
-
-        /* Main Content */
-        .main-content { flex: 1; display: flex; flex-direction: column; overflow-y: auto; padding: 40px; }
-        .topbar { margin-bottom: 30px; display: flex; justify-content: space-between; align-items: center; }
-        .page-title { font-size: 28px; font-weight: 600; letter-spacing: -0.5px; }
-        .client-badge { background: var(--glass-bg); border: 1px solid var(--glass-border); padding: 6px 14px; border-radius: 20px; font-size: 14px; backdrop-filter: blur(10px); }
-
-        /* Content Areas & Glass Cards */
-        .content-area { display: none; opacity: 0; transform: translateY(10px); transition: opacity 0.4s ease, transform 0.4s ease; }
-        .content-area.active { display: block; opacity: 1; transform: translateY(0); }
+        .main-content { flex: 1; display: none; flex-direction: column; overflow-y: auto; padding: 50px; }
+        .topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px; }
+        .page-title { font-size: 32px; font-weight: 700; letter-spacing: -0.5px; }
         
-        .glass-card {
-            background: var(--glass-bg); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
-            border: 1px solid var(--glass-border); border-radius: 16px; padding: 24px;
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3); margin-bottom: 24px;
+        /* Client Badge Profile */
+        .client-profile {
+            display: flex; align-items: center; gap: 12px; background: var(--glass-bg); 
+            border: 1px solid var(--glass-border); padding: 8px 16px 8px 8px; border-radius: 30px;
         }
-        .iframe-container { width: 100%; height: 60vh; border: none; border-radius: 12px; background: rgba(255,255,255,0.9); }
+        .avatar { width: 36px; height: 36px; border-radius: 50%; background: var(--accent); display: flex; align-items: center; justify-content: center; font-weight: bold; }
 
-        /* Responsive Design */
-        @media (max-width: 768px) {
+        .glass-card { 
+            background: var(--glass-bg); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border); border-radius: 20px; padding: 30px; margin-bottom: 30px; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .chart-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 30px; }
+
+        @media (max-width: 900px) {
+            .chart-grid { grid-template-columns: 1fr; }
             .sidebar { position: fixed; transform: translateX(-100%); height: 100%; }
             .sidebar.open { transform: translateX(0); }
-            .mobile-toggle { display: block; }
-            .main-content { padding: 20px; padding-top: 80px; }
-            .page-title { font-size: 22px; }
+            .main-content { padding: 30px; padding-top: 80px; }
         }
     </style>
 </head>
 <body>
 
+    <div id="login-overlay">
+        <div class="login-card">
+            <div class="login-logo">OMNYZO<span>.</span></div>
+            <p style="color: var(--text-muted); margin-bottom: 30px; font-size: 15px;">Client Access Portal</p>
+            <input type="text" id="username" class="login-input" placeholder="Client ID" autocomplete="off">
+            <input type="password" id="password" class="login-input" placeholder="Passcode">
+            <button class="login-btn" onclick="checkLogin()">Authenticate</button>
+            <p id="login-error" style="color: #ff4d4d; font-size: 13px; margin-top: 15px; display: none; font-weight: 500;">Authentication failed. Invalid credentials.</p>
+        </div>
+    </div>
+
     <div id="intro-screen">
-        <div class="intro-logo">OMNYZO.</div>
+        <div class="intro-logo" id="intro-text">OMNYZO.</div>
     </div>
 
     <div id="notification">
-        <i class="fas fa-check-circle" style="color: #34d399;"></i>
-        <span id="notif-text">Data synced successfully</span>
+        <i class="fas fa-check-circle" style="color: #34d399; font-size: 18px;"></i>
+        <span id="notif-text">Access Granted</span>
     </div>
 
-    <button class="mobile-toggle" onclick="toggleMenu()"><i class="fas fa-bars"></i></button>
-
     <nav class="sidebar" id="sidebar">
-        <div class="logo">OMNYZO<span>.</span></div>
-        <div class="nav-item active" onclick="switchTab('growth', 'Growth Analytics Loaded')"><i class="fas fa-chart-pie"></i> Growth Stats</div>
-        <div class="nav-item" onclick="switchTab('kol', 'KOL Tracker Synced')"><i class="fas fa-users"></i> KOL Tracker</div>
-        <div class="nav-item" onclick="switchTab('listening', 'Sentiment Analysis Ready')"><i class="fas fa-headphones"></i> Social Listening</div>
-        <div class="nav-item" onclick="switchTab('creatives', 'Top Assets Loaded')"><i class="fas fa-fire"></i> Top Creatives</div>
+        <div class="login-logo" style="margin-bottom: 50px; text-align: left;">OMNYZO<span>.</span></div>
+        <div class="nav-item active" onclick="switchTab('growth', 'Analytics Synchronized')"><i class="fas fa-chart-line"></i> Growth Metrics</div>
+        <div class="nav-item" onclick="switchTab('kol', 'KOL Database Loaded')"><i class="fas fa-users"></i> KOL Tracker</div>
+        <div style="flex-grow: 1;"></div>
+        <div class="nav-item" onclick="logout()" style="color: #ff4d4d;"><i class="fas fa-sign-out-alt"></i> Terminate Session</div>
     </nav>
 
-    <main class="main-content">
+    <main class="main-content" id="main-content">
         <div class="topbar">
-            <div class="page-title" id="topbar-title">Growth Analytics</div>
-            <div class="client-badge"><i class="fas fa-building"></i> Client Portal</div>
+            <h1 class="page-title" id="topbar-title">Growth Metrics</h1>
+            <div class="client-profile">
+                <div class="avatar" id="client-initial">C</div>
+                <span id="client-name" style="font-weight: 600; font-size: 14px;">Client Name</span>
+            </div>
         </div>
 
         <div id="growth" class="content-area active">
-            <div class="glass-card">
-                <h3 style="margin-bottom: 15px; font-weight: 500;">Overall Brand Performance</h3>
-                <p style="color: var(--text-muted); margin-bottom: 15px; font-size: 14px;">Sinkronisasi real-time dengan Omnyzo Master Data.</p>
-                <iframe class="iframe-container" src="https://docs.google.com/spreadsheets/d/e/2PACX-1vS8HZrChnGPOHIUScBQyzL2e6SRQ84G5miZQxlIVAVmAdDH3fPz1FDPMmgCAgaz1rmtaSykCBh_JYkH/pubhtml?widget=true&amp;headers=false"></iframe>
-            </div>
-        </div>
-
-        <div id="kol" class="content-area">
-            <div class="glass-card">
-                <h3 style="margin-bottom: 15px; font-weight: 500;">Influencer Campaign Tracker</h3>
-                <p style="color: var(--text-muted); margin-bottom: 15px; font-size: 14px;">Live tracking untuk nano & micro influencers.</p>
-                <div style="padding: 40px; text-align: center; border: 1px dashed var(--glass-border); border-radius: 12px;">
-                    <i class="fas fa-table" style="font-size: 40px; color: var(--text-muted); margin-bottom: 15px;"></i>
-                    <p>Integrate KOL Tracking Sheet Here</p>
+            <div class="chart-grid">
+                <div class="glass-card">
+                    <h3 style="margin-bottom: 25px; font-weight: 600; font-size: 18px;">Follower Acquisition Trend</h3>
+                    <div id="chart-growth"></div>
+                </div>
+                <div class="glass-card">
+                    <h3 style="margin-bottom: 25px; font-weight: 600; font-size: 18px;">Engagement Rate</h3>
+                    <div id="chart-engagement"></div>
                 </div>
             </div>
         </div>
 
-        <div id="listening" class="content-area">
-            <div class="glass-card">
-                <h3 style="margin-bottom: 15px; font-weight: 500;">Social Sentiment</h3>
-                <p style="color: var(--text-muted); margin-bottom: 15px; font-size: 14px;">Audience emotion and keyword tracking.</p>
-                <div style="padding: 40px; text-align: center; border: 1px dashed var(--glass-border); border-radius: 12px;">
-                    <i class="fas fa-table" style="font-size: 40px; color: var(--text-muted); margin-bottom: 15px;"></i>
-                    <p>Integrate Social Sentiment Sheet Here</p>
-                </div>
-            </div>
-        </div>
-
-        <div id="creatives" class="content-area">
-            <div class="glass-card">
-                <h3 style="margin-bottom: 15px; font-weight: 500;">Top Performing Assets</h3>
-                <p style="color: var(--text-muted); font-size: 14px;">Visual dengan engagement tertinggi bulan ini.</p>
-                <div style="padding: 40px; text-align: center; border: 1px dashed var(--glass-border); border-radius: 12px; margin-top: 20px;">
-                    <i class="fas fa-image" style="font-size: 40px; color: var(--text-muted); margin-bottom: 15px;"></i>
-                    <p>Integrate Looker Studio / Instagram Embeds here</p>
-                </div>
+        <div id="kol" class="content-area" style="display:none;">
+            <div class="glass-card" style="max-width: 500px;">
+                <h3 style="margin-bottom: 10px; font-weight: 600;">Campaign Completion Status</h3>
+                <p style="color: var(--text-muted); margin-bottom: 30px; font-size: 14px;">Live tracking of approved KOL deliverables.</p>
+                <div id="chart-kol"></div>
             </div>
         </div>
     </main>
 
     <script>
-        // Intro Screen Logic
-        window.addEventListener('load', () => {
-            setTimeout(() => {
-                const intro = document.getElementById('intro-screen');
-                intro.style.opacity = '0';
+        // --- 1. LOGIN & AUTHENTICATION LOGIC ---
+        let currentClient = "";
+
+        // Database Client Sementara (Hardcoded untuk keselamatan asas)
+        const clientDB = {
+            "Faiz": { pass: "admin123", display: "Omnyzo Admin", init: "O" },
+            "Cagamas": { pass: "cagamas12345", display: "Cagamas Berhad", init: "C" },
+            "Mind Bloomy": { pass: "mind123", display: "Mind Bloomy", init: "M" }
+        };
+
+        function checkLogin() {
+            const user = document.getElementById('username').value;
+            const pass = document.getElementById('password').value;
+
+            if (clientDB[user] && clientDB[user].pass === pass) {
+                currentClient = clientDB[user];
+                document.getElementById('login-overlay').style.opacity = '0';
                 setTimeout(() => {
-                    intro.style.visibility = 'hidden';
-                    showNotification('Welcome to The Vault'); // Initial Notification
-                }, 1000);
-            }, 2000); // Intro lasts 2 seconds
-        });
-
-        // Liquid Notification Logic
-        function showNotification(message) {
-            const notif = document.getElementById('notification');
-            const notifText = document.getElementById('notif-text');
-            notifText.innerText = message;
-            
-            notif.classList.add('show');
-            
-            // Hide after 3 seconds
-            setTimeout(() => {
-                notif.classList.remove('show');
-            }, 3000);
-        }
-
-        // Tab Switching Logic
-        function switchTab(tabId, notifMessage) {
-            // Hide all tabs
-            document.querySelectorAll('.content-area').forEach(el => el.classList.remove('active'));
-            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-            
-            // Show selected tab
-            document.getElementById(tabId).classList.add('active');
-            event.currentTarget.classList.add('active');
-            
-            // Update Title
-            const titles = {
-                'growth': 'Growth Analytics',
-                'kol': 'KOL Tracker',
-                'listening': 'Social Listening',
-                'creatives': 'Top Creatives'
-            };
-            document.getElementById('topbar-title').innerText = titles[tabId];
-
-            // Trigger Apple-style Notification
-            showNotification(notifMessage);
-
-            // Close mobile menu if open
-            if(window.innerWidth <= 768) {
-                document.getElementById('sidebar').classList.remove('open');
+                    document.getElementById('login-overlay').style.display = 'none';
+                    startIntro();
+                }, 800);
+            } else {
+                document.getElementById('login-error').style.display = 'block';
             }
         }
 
-        // Mobile Menu Toggle
-        function toggleMenu() {
-            document.getElementById('sidebar').classList.toggle('open');
+        function startIntro() {
+            const intro = document.getElementById('intro-screen');
+            const introText = document.getElementById('intro-text');
+            
+            // Personalize intro based on client
+            introText.innerText = "Welcome, " + currentClient.display;
+            introText.style.animation = "appleReveal 2s cubic-bezier(0.25, 1, 0.5, 1) forwards";
+            intro.style.display = 'flex';
+            
+            // Set Topbar Client Info
+            document.getElementById('client-name').innerText = currentClient.display;
+            document.getElementById('client-initial').innerText = currentClient.init;
+
+            setTimeout(() => {
+                intro.style.opacity = '0';
+                setTimeout(() => {
+                    intro.style.display = 'none';
+                    document.getElementById('main-content').style.display = 'flex';
+                    showNotification('Secure connection established.');
+                    renderCharts(); // Lukis graf
+                }, 1000);
+            }, 2500);
+        }
+
+        // --- 2. UI INTERACTIONS ---
+        function showNotification(msg) {
+            const n = document.getElementById('notification');
+            document.getElementById('notif-text').innerText = msg;
+            n.classList.add('show');
+            setTimeout(() => n.classList.remove('show'), 3500);
+        }
+
+        function switchTab(tabId, msg) {
+            document.querySelectorAll('.content-area').forEach(el => el.style.display = 'none');
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            
+            document.getElementById(tabId).style.display = 'block';
+            event.currentTarget.classList.add('active');
+            
+            const titles = { 'growth': 'Growth Metrics', 'kol': 'KOL Tracker' };
+            document.getElementById('topbar-title').innerText = titles[tabId];
+            
+            showNotification(msg);
+        }
+
+        function logout() { location.reload(); }
+
+        // --- 3. APEXCHARTS ENGINE (NATIVE GRAPHS) ---
+        function renderCharts() {
+            const commonOptions = {
+                chart: { toolbar: { show: false }, background: 'transparent', fontFamily: '-apple-system, sans-serif' },
+                theme: { mode: 'dark' },
+                grid: { borderColor: 'rgba(255,255,255,0.05)', strokeDashArray: 4 },
+                dataLabels: { enabled: false },
+                tooltip: { theme: 'dark', style: { fontSize: '14px' } }
+            };
+
+            // Area Chart (Followers)
+            new ApexCharts(document.querySelector("#chart-growth"), {
+                ...commonOptions,
+                series: [{ name: 'Total Followers', data: [12000, 15000, 18500, 22000, 28000, 35000] }],
+                chart: { ...commonOptions.chart, type: 'area', height: 350 },
+                colors: ['#007AFF'],
+                stroke: { curve: 'smooth', width: 3 },
+                fill: { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.5, opacityTo: 0.05 } },
+                xaxis: { categories: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'], axisBorder: { show: false }, axisTicks: { show: false } },
+                yaxis: { labels: { formatter: (value) => { return value / 1000 + "k" } } }
+            }).render();
+
+            // Bar Chart (Engagement)
+            new ApexCharts(document.querySelector("#chart-engagement"), {
+                ...commonOptions,
+                series: [{ name: 'Engagement %', data: [3.2, 4.1, 3.8, 5.5, 6.2] }],
+                chart: { ...commonOptions.chart, type: 'bar', height: 350 },
+                colors: ['#34d399'],
+                plotOptions: { bar: { borderRadius: 8, columnWidth: '40%' } },
+                xaxis: { categories: ['W1', 'W2', 'W3', 'W4', 'W5'], axisBorder: { show: false }, axisTicks: { show: false } }
+            }).render();
+
+            // Radial Chart (KOL Progress)
+            new ApexCharts(document.querySelector("#chart-kol"), {
+                series: [82],
+                chart: { type: 'radialBar', height: 350, background: 'transparent' },
+                plotOptions: {
+                    radialBar: {
+                        hollow: { size: '70%', background: 'transparent' },
+                        track: { background: 'rgba(255,255,255,0.05)' },
+                        dataLabels: {
+                            name: { show: true, fontSize: '14px', color: '#94a3b8', offsetY: 20 },
+                            value: { show: true, fontSize: '40px', fontWeight: 700, color: '#fff', offsetY: -10, formatter: function (val) { return val + "%" } }
+                        }
+                    }
+                },
+                fill: { type: 'gradient', gradient: { shade: 'dark', type: 'horizontal', colorStops: [[{ offset: 0, color: '#007AFF', opacity: 1 }, { offset: 100, color: '#34d399', opacity: 1 }]] } },
+                stroke: { lineCap: 'round' },
+                labels: ['Completed'],
+            }).render();
         }
     </script>
 </body>
